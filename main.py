@@ -120,7 +120,7 @@ class Solver(object):
                 output = self.model.semiforward(data).cpu()
 
                 outs[total:total+target.size(0), :] = output
-                targets[total:total+target.size(0)] = target
+                targets[total:total+target.size(0)] = target.cpu()
                 total += target.size(0)
                 
 
@@ -140,7 +140,7 @@ class Solver(object):
                 output = self.model.semiforward(data).cpu()
 
                 outs[total:total+target.size(0), :] = output
-                targets[total:total+target.size(0)] = target
+                targets[total:total+target.size(0)] = target.cpu()
                 total += target.size(0)
                 
 
