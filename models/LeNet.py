@@ -21,3 +21,14 @@ class LeNet(nn.Module):
         x = func.relu(self.fc2(x))
         x = self.fc3(x)
         return x
+
+    def semiforward(self, x):
+        x = func.relu(self.conv1(x))
+        x = func.max_pool2d(x, 2)
+        x = func.relu(self.conv2(x))
+        x = func.max_pool2d(x, 2)
+        x = x.view(x.size(0), -1)
+        x = func.relu(self.fc1(x))
+        x = func.relu(self.fc2(x))
+
+        return x

@@ -4,6 +4,7 @@ import torch.backends.cudnn as cudnn
 import torchvision
 from torchvision import transforms as transforms
 import numpy as np
+import pandas as pd
 
 import argparse
 
@@ -17,7 +18,7 @@ CLASSES = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 def main():
     parser = argparse.ArgumentParser(description="cifar-10 with PyTorch")
     parser.add_argument('--lr', default=0.001, type=float, help='learning rate')
-    parser.add_argument('--epoch', default=200, type=int, help='number of epochs tp train for')
+    parser.add_argument('--epoch', default=50, type=int, help='number of epochs tp train for')
     parser.add_argument('--trainBatchSize', default=100, type=int, help='training batch size')
     parser.add_argument('--testBatchSize', default=100, type=int, help='testing batch size')
     parser.add_argument('--cuda', default=torch.cuda.is_available(), type=bool, help='whether cuda is in use')
@@ -57,7 +58,7 @@ class Solver(object):
         else:
             self.device = torch.device('cpu')
 
-        # self.model = LeNet().to(self.device)
+        self.model = LeNet().to(self.device)
         # self.model = AlexNet().to(self.device)
         # self.model = VGG11().to(self.device)
         # self.model = VGG13().to(self.device)
@@ -73,7 +74,7 @@ class Solver(object):
         # self.model = DenseNet161().to(self.device)
         # self.model = DenseNet169().to(self.device)
         # self.model = DenseNet201().to(self.device)
-        self.model = WideResNet(depth=28, num_classes=10).to(self.device)
+        # self.model = WideResNet(depth=28, num_classes=10).to(self.device)
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.scheduler = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[75, 150], gamma=0.5)
@@ -104,6 +105,44 @@ class Solver(object):
                          % (train_loss / (batch_num + 1), 100. * train_correct / total, train_correct, total))
 
         return train_loss, train_correct / total
+    
+    def train_features(self):
+        print("train:")
+        self.model.train()
+        train_loss = 0
+        train_correct = 0
+        total = 0
+        outs = np.zeros((50000, 84))
+
+        with torch.no_grad():
+            for batch_num, (data, target) in enumerate(self.train_loader):
+                data, target = data.to(self.device), target.to(self.device)
+                output = self.model.semiforward(data)
+
+                outs[total:total+target.size(0), :] = output
+                total += target.size(0)
+                
+
+        return outs
+    
+    def test_features(self):
+        print("train:")
+        self.model.train()
+        train_loss = 0
+        train_correct = 0
+        total = 0
+        outs = np.zeros((10000, 84))
+
+        with torch.no_grad():
+            for batch_num, (data, target) in enumerate(self.test_loader):
+                data, target = data.to(self.device), target.to(self.device)
+                output = self.model.semiforward(data)
+
+                outs[total:total+target.size(0), :] = output
+                total += target.size(0)
+                
+
+        return outs
 
     def test(self):
         print("test:")
@@ -138,7 +177,7 @@ class Solver(object):
         accuracy = 0
         for epoch in range(1, self.epochs + 1):
             self.scheduler.step(epoch)
-            print("\n===> epoch: %d/200" % epoch)
+            print("\n===> epoch: " + str(epoch) + '/' + str(self.epochs + 1))
             train_result = self.train()
             print(train_result)
             test_result = self.test()
@@ -146,6 +185,9 @@ class Solver(object):
             if epoch == self.epochs:
                 print("===> BEST ACC. PERFORMANCE: %.3f%%" % (accuracy * 100))
                 self.save()
+        
+        pd.DataFrame(self.train_features()).to_csv('train_lenet_cifar.csv')
+        pd.DataFrame(self.test_features()).to_csv('test_lenet_cifar.csv')
 
 
 if __name__ == '__main__':
