@@ -113,17 +113,18 @@ class Solver(object):
         train_correct = 0
         total = 0
         outs = np.zeros((50000, 84))
-
+        targets = np.zeros((10000,))
         with torch.no_grad():
             for batch_num, (data, target) in enumerate(self.train_loader):
                 data, target = data.to(self.device), target.to(self.device)
                 output = self.model.semiforward(data).cpu()
 
                 outs[total:total+target.size(0), :] = output
+                targets[total:total+target.size(0)] = target
                 total += target.size(0)
                 
 
-        return outs
+        return outs, targets
     
     def test_features(self):
         print("train:")
@@ -132,17 +133,18 @@ class Solver(object):
         train_correct = 0
         total = 0
         outs = np.zeros((10000, 84))
-
+        targets = np.zeros((10000,))
         with torch.no_grad():
             for batch_num, (data, target) in enumerate(self.test_loader):
                 data, target = data.to(self.device), target.to(self.device)
                 output = self.model.semiforward(data).cpu()
 
                 outs[total:total+target.size(0), :] = output
+                targets[total:total+target.size(0)] = target
                 total += target.size(0)
                 
 
-        return outs
+        return outs, targets
 
     def test(self):
         print("test:")
@@ -186,8 +188,13 @@ class Solver(object):
                 print("===> BEST ACC. PERFORMANCE: %.3f%%" % (accuracy * 100))
                 self.save()
         
-        pd.DataFrame(self.train_features()).to_csv('train_lenet_cifar.csv')
-        pd.DataFrame(self.test_features()).to_csv('test_lenet_cifar.csv')
+        x, y = self.train_features()
+        pd.DataFrame(x).to_csv('train_lenet_cifar.csv')
+        pd.DataFrame(y).to_csv('train_y_lenet_cifar.csv')
+
+        x, y = self.test_features()
+        pd.DataFrame(x).to_csv('test_lenet_cifar.csv')
+        pd.DataFrame(y).to_csv('test_y_lenet_cifar.csv')
 
 
 if __name__ == '__main__':
