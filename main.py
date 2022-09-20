@@ -113,13 +113,14 @@ class Solver(object):
         train_correct = 0
         total = 0
         outs = np.zeros((50000, 84))
-        targets = np.zeros((10000,))
+        targets = np.zeros((50000,))
         with torch.no_grad():
             for batch_num, (data, target) in enumerate(self.train_loader):
                 data, target = data.to(self.device), target.to(self.device)
                 output = self.model.semiforward(data).cpu()
 
                 outs[total:total+target.size(0), :] = output
+                print(total, total+target.size(0))
                 targets[total:total+target.size(0)] = target.cpu()
                 total += target.size(0)
                 
